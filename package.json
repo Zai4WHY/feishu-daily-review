@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "飞书日程复盘机器人",
   "private": true,
-  "type": "module",
   "scripts": {
     "dev": "vercel dev",
     "deploy": "vercel --prod"
