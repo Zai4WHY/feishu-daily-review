@@ -7,7 +7,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { extractInfo, generateGrid } from "../lib/deepseek";
 import { getMessages, appendMessage } from "../lib/storage";
 import { sendMessage, uploadImage, sendImageMessage } from "../lib/feishu";
-import { renderChart } from "../lib/chart";
+// chart 模块依赖原生绑定，改为动态导入，只在需要时才加载
 import type { ScheduleMessage } from "../lib/types";
 
 /** 北京时间日期 YYYY-MM-DD */
@@ -131,7 +131,8 @@ async function handlePreview(openId: string, date: string): Promise<void> {
     // 1. AI 生成网格
     const grid = await generateGrid(date, messages);
 
-    // 2. 渲染图片
+    // 2. 渲染图片（动态导入，避免全局加载原生模块导致崩溃）
+    const { renderChart } = await import("../lib/chart");
     const imageBuffer = await renderChart(date, grid);
 
     // 3. 上传到飞书

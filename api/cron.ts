@@ -7,7 +7,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getMessages } from "../lib/storage";
 import { generateGrid } from "../lib/deepseek";
 import { sendMessage, uploadImage, sendImageMessage } from "../lib/feishu";
-import { renderChart } from "../lib/chart";
+// chart 模块依赖原生绑定，动态导入
 
 const USER_ID = process.env.FEISHU_USER_ID!;
 
@@ -36,8 +36,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 1. AI 生成48槽网格
     const grid = await generateGrid(date, messages);
 
-    // 2. 渲染为图片
+    // 2. 渲染为图片（动态导入）
     console.log(`[Cron] 渲染图表...`);
+    const { renderChart } = await import("../lib/chart");
     const imageBuffer = await renderChart(date, grid);
 
     // 3. 上传飞书

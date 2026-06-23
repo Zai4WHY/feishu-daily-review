@@ -1,9 +1,8 @@
 /**
  * 图表渲染：将 DailyGrid 数据绘制为 PNG 图片
- * 直接生成 SVG 字符串 → resvg 转换为 PNG
+ * 直接生成 SVG 字符串 → @resvg/resvg-wasm 转换为 PNG
  */
 
-import { Resvg } from "@resvg/resvg-js";
 import type { DailyGrid } from "./types";
 import { CATEGORY_COLORS, CATEGORIES } from "./types";
 
@@ -20,10 +19,15 @@ export async function renderChart(
   grid: DailyGrid
 ): Promise<Buffer> {
   const svg = buildSvg(date, grid);
+
+  // 动态导入 WASM 版本（Vercel serverless 兼容）
+  const { Resvg } = await import("@resvg/resvg-wasm");
   const resvg = new Resvg(svg, {
-    fitTo: { mode: "width", value: WIDTH * 2 }, // 2x 清晰度
+    fitTo: { mode: "width", value: WIDTH * 2 },
   });
-  return resvg.render().asPng();
+  const image = resvg.render();
+  const pngBuffer = image.asPng();
+  return Buffer.from(pngBuffer);
 }
 
 /** 构建 SVG 字符串 */
