@@ -71,10 +71,21 @@ export async function sendMessage(openId: string, content: string): Promise<void
 export async function uploadImage(imageBuffer: Buffer): Promise<string> {
   const token = await getAccessToken();
 
-  // 飞书上传图片使用 multipart/form-data
-  const formData = new FormData();
-  formData.append("image_type", "message");
-  formData.append("image", new Blob([imageBuffer], { type: "image/png" }), "chart.png");
+  // 手动构造 multipart/form-data，避免 Node.js Blob/FormData 类型兼容问题
+  const boundary = `----FeishuBoundary${Date.now()}`;
+  const parts: Buffer[] = [];
+  const append = (s: string) => parts.push(Buffer.from(s, "utf-8"));
+
+  append(`--${boundary}\r\n`);
+  append(`Content-Disposition: form-data; name="image_type"\r\n\r\n`);
+  append(`message\r\n`);
+  append(`--${boundary}\r\n`);
+  append(`Content-Disposition: form-data; name="image"; filename="chart.png"\r\n`);
+  append(`Content-Type: image/png\r\n\r\n`);
+  parts.push(imageBuffer);
+  append(`\r\n--${boundary}--\r\n`);
+
+  const body = Buffer.concat(parts);
 
   const resp = await fetch(
     "https://open.feishu.cn/open-apis/im/v1/images",
@@ -82,8 +93,9 @@ export async function uploadImage(imageBuffer: Buffer): Promise<string> {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
+        "Content-Type": `multipart/form-data; boundary=${boundary}`,
       },
-      body: formData,
+      body,
     }
   );
 
