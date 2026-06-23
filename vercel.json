@@ -1,0 +1,18 @@
+{
+  "functions": {
+    "api/feishu.ts": {
+      "memory": 512,
+      "maxDuration": 30
+    },
+    "api/cron.ts": {
+      "memory": 1024,
+      "maxDuration": 120
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "0 16 * * *"
+    }
+  ]
+}
