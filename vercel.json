@@ -1,4 +1,5 @@
 {
+  "regions": ["sin1"],
   "functions": {
     "api/feishu.ts": {
       "memory": 512,
@@ -7,12 +8,20 @@
     "api/cron.ts": {
       "memory": 1024,
       "maxDuration": 120
+    },
+    "api/health.ts": {
+      "memory": 128,
+      "maxDuration": 10
     }
   },
   "crons": [
     {
       "path": "/api/cron",
       "schedule": "0 16 * * *"
+    },
+    {
+      "path": "/api/health",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
