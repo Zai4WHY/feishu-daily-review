@@ -18,10 +18,6 @@
     {
       "path": "/api/cron",
       "schedule": "0 16 * * *"
-    },
-    {
-      "path": "/api/health",
-      "schedule": "*/5 * * * *"
     }
   ]
 }
