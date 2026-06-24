@@ -4,8 +4,8 @@
  */
 
 import OpenAI from "openai";
-import type { ScheduleMessage, DailyGrid } from "./types";
-import { CATEGORIES } from "./types";
+import type { ScheduleMessage, DailyGrid } from "./types.js";
+import { CATEGORIES } from "./types.js";
 
 const client = new OpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY!,

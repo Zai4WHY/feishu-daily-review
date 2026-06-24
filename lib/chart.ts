@@ -3,8 +3,8 @@
  * 直接生成 SVG 字符串 → @resvg/resvg-wasm 转换为 PNG
  */
 
-import type { DailyGrid } from "./types";
-import { CATEGORY_COLORS, CATEGORIES } from "./types";
+import type { DailyGrid } from "./types.js";
+import { CATEGORY_COLORS, CATEGORIES } from "./types.js";
 
 const WIDTH = 860;
 const PADDING = 16;

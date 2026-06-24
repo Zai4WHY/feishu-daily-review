@@ -4,9 +4,9 @@
  */
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getMessages } from "../lib/storage";
-import { generateGrid } from "../lib/deepseek";
-import { sendMessage, uploadImage, sendImageMessage } from "../lib/feishu";
+import { getMessages } from "../lib/storage.js";
+import { generateGrid } from "../lib/deepseek.js";
+import { sendMessage, uploadImage, sendImageMessage } from "../lib/feishu.js";
 // chart 模块依赖原生绑定，动态导入
 
 const USER_ID = process.env.FEISHU_USER_ID!;
@@ -38,7 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 2. 渲染为图片（动态导入）
     console.log(`[Cron] 渲染图表...`);
-    const { renderChart } = await import("../lib/chart");
+    const { renderChart } = await import("../lib/chart.js");
     const imageBuffer = await renderChart(date, grid);
 
     // 3. 上传飞书

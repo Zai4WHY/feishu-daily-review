@@ -3,7 +3,7 @@
  */
 
 import { kv } from "@vercel/kv";
-import type { ScheduleMessage } from "./types";
+import type { ScheduleMessage } from "./types.js";
 
 const USER_ID = process.env.FEISHU_USER_ID!;
 
