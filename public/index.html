@@ -517,46 +517,6 @@ function closeChart() {
   chartContent.innerHTML = '';
 }
 
-// ====== Push Subscription ======
-async function subscribePush() {
-  try {
-    // Get VAPID key
-    const vapidResp = await fetch('/api/subscribe/vapid');
-    if (!vapidResp.ok) {
-      console.log('VAPID 未配置，跳过推送订阅');
-      return;
-    }
-    const { publicKey } = await vapidResp.json();
-
-    const reg = await navigator.serviceWorker.ready;
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub) {
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey),
-      });
-    }
-
-    // Save subscription to server
-    await fetch('/api/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(sub.toJSON()),
-    });
-    console.log('Push 订阅成功');
-  } catch (e) {
-    console.warn('Push 订阅失败:', e.message);
-  }
-}
-
-function urlBase64ToUint8Array(base64) {
-  const padding = '='.repeat((4 - base64.length % 4) % 4);
-  const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const raw = atob(b64);
-  const arr = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
-  return arr;
-}
 
 // ====== Event Handlers ======
 btnSend.addEventListener('click', async () => {
@@ -632,21 +592,11 @@ document.querySelectorAll('.nav-item').forEach(item => {
 
 // ====== Init ======
 async function init() {
-  // Register Service Worker
+  // Register Service Worker (for offline caching)
   if ('serviceWorker' in navigator) {
     try {
       const reg = await navigator.serviceWorker.register('/sw.js');
       console.log('SW registered:', reg.scope);
-      // Subscribe to push
-      if ('PushManager' in window) {
-        // Request notification permission first
-        if (Notification.permission === 'default') {
-          await Notification.requestPermission();
-        }
-        if (Notification.permission === 'granted') {
-          await subscribePush();
-        }
-      }
     } catch (e) {
       console.warn('SW registration failed:', e.message);
     }
