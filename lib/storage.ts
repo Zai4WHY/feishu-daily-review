@@ -3,13 +3,18 @@
  */
 
 import { kv } from "@vercel/kv";
-import type { ScheduleMessage } from "./types.js";
+import type { ScheduleMessage, DailyGrid } from "./types.js";
 
-const USER_ID = process.env.FEISHU_USER_ID!;
+const USER_ID = process.env.SUBSCRIBER_ID || "default";
 
 /** 消息存储 key */
 function messageKey(date: string): string {
   return `messages:${USER_ID}:${date}`;
+}
+
+/** 网格存储 key */
+function gridKey(date: string): string {
+  return `grid:${USER_ID}:${date}`;
 }
 
 /** 获取某天的所有消息 */
@@ -31,4 +36,46 @@ export async function appendMessage(
 /** 删除某天的消息 */
 export async function clearMessages(date: string): Promise<void> {
   await kv.del(messageKey(date));
+}
+
+/** 保存零点生成的网格到 KV */
+export async function saveGrid(
+  date: string,
+  grid: DailyGrid
+): Promise<void> {
+  await kv.set(gridKey(date), grid);
+  await kv.expire(gridKey(date), 7 * 24 * 3600);
+}
+
+/** 获取零点生成的网格 */
+export async function getGrid(date: string): Promise<DailyGrid | null> {
+  return await kv.get<DailyGrid>(gridKey(date));
+}
+
+/** 获取所有 push subscriptions */
+export async function getSubscriptions(): Promise<PushSubscriptionJSON[]> {
+  const subs = await kv.lrange<PushSubscriptionJSON>("push:subscriptions", 0, -1);
+  return subs || [];
+}
+
+/** 保存 push subscription */
+export async function saveSubscription(sub: PushSubscriptionJSON): Promise<void> {
+  // 检查是否已存在相同的 endpoint
+  const existing = await getSubscriptions();
+  const dup = existing.find((s) => s.endpoint === sub.endpoint);
+  if (!dup) {
+    await kv.rpush("push:subscriptions", sub);
+  }
+}
+
+/** 删除 push subscription */
+export async function removeSubscription(endpoint: string): Promise<void> {
+  const subs = await getSubscriptions();
+  const filtered = subs.filter((s) => s.endpoint !== endpoint);
+  await kv.del("push:subscriptions");
+  if (filtered.length > 0) {
+    for (const s of filtered) {
+      await kv.rpush("push:subscriptions", s);
+    }
+  }
 }

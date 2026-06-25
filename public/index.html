@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+<meta name="theme-color" content="#47645e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="日程复盘">
+<link rel="manifest" href="/manifest.json">
+<title>日程复盘助手</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "primary-fixed": "#c9e9e1",
+        "error": "#ba1a1a",
+        "surface-container-high": "#e4e8f1",
+        "error-container": "#ffdad6",
+        "inverse-on-surface": "#edf1f9",
+        "surface-container-lowest": "#ffffff",
+        "inverse-primary": "#adcdc6",
+        "surface-tint": "#47645e",
+        "surface": "#f7f9ff",
+        "surface-container": "#eaeef6",
+        "on-tertiary": "#ffffff",
+        "tertiary-container": "#aba296",
+        "on-primary": "#ffffff",
+        "secondary-fixed": "#dce3eb",
+        "tertiary-fixed": "#ebe1d4",
+        "on-primary-container": "#223f3a",
+        "primary-container": "#8baaa3",
+        "on-background": "#171c22",
+        "inverse-surface": "#2c3137",
+        "on-error-container": "#93000a",
+        "outline": "#717976",
+        "secondary-container": "#dce3eb",
+        "surface-container-highest": "#dee3eb",
+        "on-tertiary-fixed": "#1f1b13",
+        "on-secondary-fixed-variant": "#40484e",
+        "background": "#f7f9ff",
+        "on-primary-fixed": "#01201c",
+        "on-tertiary-fixed-variant": "#4c463c",
+        "surface-bright": "#f7f9ff",
+        "primary": "#47645e",
+        "tertiary": "#645d53",
+        "surface-variant": "#dee3eb",
+        "secondary": "#575f65",
+        "on-error": "#ffffff",
+        "tertiary-fixed-dim": "#cfc5b9",
+        "on-secondary-container": "#5d656b",
+        "on-surface-variant": "#414846",
+        "outline-variant": "#c1c8c5",
+        "surface-dim": "#d6dae2",
+        "on-tertiary-container": "#3e3930",
+        "on-surface": "#171c22",
+        "primary-fixed-dim": "#adcdc6",
+        "on-secondary": "#ffffff",
+        "surface-container-low": "#f0f4fc",
+        "on-primary-fixed-variant": "#2f4c47",
+        "secondary-fixed-dim": "#bfc7ce",
+        "on-secondary-fixed": "#151d22"
+      },
+      borderRadius: {
+        "DEFAULT": "0.25rem",
+        "lg": "0.5rem",
+        "xl": "0.75rem",
+        "full": "9999px"
+      },
+      spacing: {
+        "md": "24px",
+        "base": "8px",
+        "xs": "4px",
+        "gutter-mobile": "16px",
+        "margin-mobile": "20px",
+        "lg": "40px",
+        "sm": "12px"
+      },
+      fontFamily: {
+        "label-sm": ["Manrope"],
+        "body-lg": ["Manrope"],
+        "headline-xl": ["Manrope"],
+        "headline-lg": ["Manrope"],
+        "headline-md": ["Manrope"],
+        "body-md": ["Manrope"],
+        "body-sm": ["Manrope"],
+        "label-md": ["Manrope"]
+      },
+      fontSize: {
+        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+        "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}]
+      }
+    }
+  }
+}
+</script>
+<style>
+  body {
+    background-color: #f7f9ff;
+    color: #171c22;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .message-shadow {
+    box-shadow: 0 4px 12px rgba(71, 100, 94, 0.06);
+  }
+  .chat-container {
+    height: calc(100vh - 140px);
+  }
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    vertical-align: middle;
+  }
+  .chart-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: 70vh;
+    background: #fff;
+  }
+  .chart-card svg {
+    display: block;
+    min-width: 860px;
+  }
+  .loading-dot {
+    animation: bounce 1.4s infinite both;
+  }
+  .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+  }
+  #toast {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+</style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-md shadow-sm flex items-center justify-between px-margin-mobile py-base">
+  <div class="flex items-center gap-3">
+    <h1 class="font-headline-md text-headline-md text-on-surface">日程复盘助手</h1>
+  </div>
+  <div class="flex items-center gap-2">
+    <span id="date-badge" class="font-label-sm text-label-sm text-outline px-2 py-1 bg-surface-container-low rounded-full"></span>
+    <button id="btn-history" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant" title="历史">
+      <span class="material-symbols-outlined">history</span>
+    </button>
+  </div>
+</header>
+
+<!-- Main Chat Content -->
+<main id="chat-area" class="flex-grow pt-20 pb-28 px-margin-mobile chat-container overflow-y-auto space-y-lg">
+  <!-- AI Welcome -->
+  <div class="flex justify-center">
+    <span class="font-label-sm text-label-sm text-outline px-4 py-1 bg-surface-container-low rounded-full" id="date-divider">今天</span>
+  </div>
+  <div class="flex items-start gap-3 max-w-[85%]">
+    <div class="w-8 h-8 rounded-full flex-shrink-0 bg-primary-fixed flex items-center justify-center">
+      <span class="material-symbols-outlined text-on-primary-fixed text-[18px]">auto_awesome</span>
+    </div>
+    <div class="bg-white p-md rounded-xl rounded-tl-none message-shadow">
+      <p class="font-body-md text-body-md text-on-surface">你好！我是日程复盘助手。告诉我你今天在哪里做了什么事，我会帮你记录并生成每日复盘表格。试试输入"我到教学楼学习数学了"开始吧！</p>
+    </div>
+  </div>
+</main>
+
+<!-- Bottom Input Area -->
+<footer class="fixed bottom-0 w-full bg-surface/90 backdrop-blur-lg px-margin-mobile py-base pb-gutter-mobile">
+  <!-- Quick Actions -->
+  <div class="flex gap-2 mb-2">
+    <button class="quick-btn flex items-center gap-1 px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant text-sm hover:bg-primary-fixed/50 transition-colors" data-cmd="/数据">
+      <span class="material-symbols-outlined text-[16px]">dataset</span>
+      <span class="text-xs">数据</span>
+    </button>
+    <button class="quick-btn flex items-center gap-1 px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant text-sm hover:bg-primary-fixed/50 transition-colors" data-cmd="/预览">
+      <span class="material-symbols-outlined text-[16px]">preview</span>
+      <span class="text-xs">预览</span>
+    </button>
+  </div>
+  <div class="flex items-center gap-sm">
+    <div id="input-wrapper" class="flex-grow flex items-center bg-surface-container-low rounded-xl px-md py-sm">
+      <input id="msg-input" class="flex-grow bg-transparent border-none focus:ring-0 font-body-md text-body-md text-on-surface placeholder:text-outline-variant" placeholder="今天在哪里做了什么？" type="text" autocomplete="off">
+    </div>
+    <button id="btn-send" class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white shadow-lg active:scale-95 transition-transform">
+      <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
+    </button>
+  </div>
+</footer>
+
+<!-- Bottom Navigation (Desktop) -->
+<nav class="hidden md:flex fixed bottom-0 left-0 right-0 bg-surface/90 backdrop-blur-lg border-t border-outline-variant/30 justify-around items-center px-4 py-2 w-full z-40">
+  <div class="nav-item flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full p-3 transition-all" data-tab="chat">
+    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
+  </div>
+  <div class="nav-item flex flex-col items-center justify-center text-on-surface-variant p-3 hover:bg-secondary-container/50 transition-all rounded-full" data-tab="history">
+    <span class="material-symbols-outlined">event_note</span>
+  </div>
+  <div class="nav-item flex flex-col items-center justify-center text-on-surface-variant p-3 hover:bg-secondary-container/50 transition-all rounded-full" data-tab="stats">
+    <span class="material-symbols-outlined">insights</span>
+  </div>
+  <div class="nav-item flex flex-col items-center justify-center text-on-surface-variant p-3 hover:bg-secondary-container/50 transition-all rounded-full" data-tab="settings">
+    <span class="material-symbols-outlined">settings</span>
+  </div>
+</nav>
+
+<!-- Toast -->
+<div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-on-surface text-white px-4 py-2 rounded-full shadow-lg opacity-0 pointer-events-none z-50 text-sm transition-all" style="transform: translate(-50%, -20px);"></div>
+
+<!-- SVG Chart Modal -->
+<div id="chart-modal" class="hidden fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onclick="if(event.target===this)closeChart()">
+  <div class="chart-card bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[85vh] overflow-auto relative">
+    <button onclick="closeChart()" class="sticky top-3 right-3 float-right w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center hover:bg-surface-container-highest z-10">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+    <div id="chart-content" class="p-4"></div>
+  </div>
+</div>
+
+<script>
+// ====== Constants ======
+const CATEGORY_COLORS = {
+  "上课/科研": "#BBDEFB",
+  "实习/找工作": "#C8E6C9",
+  "劳动": "#FFE0B2",
+  "主线": "#E1BEE7",
+  "其它非常不想做但是被迫做的事": "#FFCDD2",
+  "不知道在干什么": "#EEEEEE",
+};
+const CATEGORIES = Object.keys(CATEGORY_COLORS);
+
+// ====== State ======
+let currentDate = getDateFromURL() || todayCN();
+let isLoading = false;
+
+// ====== Helpers ======
+function todayCN() {
+  const d = new Date(new Date().getTime() + 8 * 3600_000);
+  return d.toISOString().slice(0, 10);
+}
+
+function getDateFromURL() {
+  const p = new URLSearchParams(location.search);
+  return p.get('date');
+}
+
+function escXml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('opacity-0', 'pointer-events-none');
+  t.style.transform = 'translate(-50%, 0)';
+  clearTimeout(t._timeout);
+  t._timeout = setTimeout(() => {
+    t.classList.add('opacity-0', 'pointer-events-none');
+    t.style.transform = 'translate(-50%, -20px)';
+  }, 2000);
+}
+
+// ====== SVG Builder (mirrors lib/chart.ts buildSvg) ======
+function buildChartSvg(date, grid) {
+  const W = 860, P = 16, TITLE_H = 56, SUM_TITLE_H = 30, SUM_ITEM_H = 28;
+  const colTime = 120, colAct = 360;
+  const colLoc = W - P * 2 - colTime - colAct;
+  const rowH = 25, headerH = 34;
+  const tableBodyH = grid.slots.length * rowH;
+  const summaryH = SUM_TITLE_H + CATEGORIES.length * SUM_ITEM_H + 20;
+  const svgH = P + TITLE_H + 8 + headerH + tableBodyH + 20 + summaryH + P;
+
+  let html = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${svgH}" viewBox="0 0 ${W} ${svgH}">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<style>
+  text { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .ct { font-size: 20px; font-weight: 700; fill: #212121; }
+  .th { font-size: 13px; font-weight: 700; fill: #ffffff; }
+  .tx { font-size: 12px; fill: #333333; }
+  .sl { font-size: 12px; font-weight: 600; fill: #333333; }
+  .sv { font-size: 12px; font-weight: 700; fill: #555555; }
+</style>
+<rect x="${P}" y="${P}" width="${W-P*2}" height="${TITLE_H}" rx="6" fill="#f5f7fa"/>
+<text x="${W/2}" y="${P+TITLE_H/2+7}" text-anchor="middle" class="ct">${date} 日程复盘</text>
+<rect x="${P}" y="${P+TITLE_H+8}" width="${W-P*2}" height="${headerH}" rx="4" fill="#616161"/>
+<text x="${P+colTime/2}" y="${P+TITLE_H+8+headerH/2+5}" text-anchor="middle" class="th">时间段</text>
+<text x="${P+colTime+colAct/2}" y="${P+TITLE_H+8+headerH/2+5}" text-anchor="middle" class="th">活动</text>
+<text x="${P+colTime+colAct+colLoc/2}" y="${P+TITLE_H+8+headerH/2+5}" text-anchor="middle" class="th">地点</text>`;
+
+  const tableTop = P + TITLE_H + 8 + headerH;
+  for (let i = 0; i < grid.slots.length; i++) {
+    const s = grid.slots[i];
+    const y = tableTop + i * rowH;
+    const bg = CATEGORY_COLORS[s.category] || '#f5f5f5';
+    const op = i % 2 === 1 ? '0.7' : '0.5';
+    html += `
+<rect x="${P}" y="${y}" width="${W-P*2}" height="${rowH}" fill="${bg}" fill-opacity="${op}"/>
+<line x1="${P+colTime}" y1="${y}" x2="${P+colTime}" y2="${y+rowH}" stroke="#e0e0e0" stroke-width="0.5"/>
+<line x1="${P+colTime+colAct}" y1="${y}" x2="${P+colTime+colAct}" y2="${y+rowH}" stroke="#e0e0e0" stroke-width="0.5"/>
+<line x1="${P}" y1="${y+rowH}" x2="${W-P}" y2="${y+rowH}" stroke="#e0e0e0" stroke-width="0.5"/>
+<text x="${P+colTime/2}" y="${y+rowH/2+4}" text-anchor="middle" class="tx">${escXml(s.time)}</text>
+<text x="${P+colTime+8}" y="${y+rowH/2+4}" text-anchor="start" class="tx">${escXml(s.activity)}</text>
+<text x="${P+colTime+colAct+8}" y="${y+rowH/2+4}" text-anchor="start" class="tx">${escXml(s.location)}</text>`;
+  }
+
+  const tableEnd = tableTop + tableBodyH;
+  html += `
+<rect x="${P}" y="${tableTop}" width="${W-P*2}" height="${tableBodyH}" fill="none" stroke="#bdbdbd" stroke-width="1"/>`;
+
+  const sumTop = tableEnd + 20;
+  html += `
+<rect x="${P}" y="${sumTop}" width="${W-P*2}" height="${summaryH}" rx="6" fill="#fafafa" stroke="#e0e0e0" stroke-width="1"/>
+<text x="${P+16}" y="${sumTop+SUM_TITLE_H/2+5}" class="sl" style="font-size:14px;">分类汇总</text>`;
+
+  for (let j = 0; j < CATEGORIES.length; j++) {
+    const cat = CATEGORIES[j];
+    const hours = grid.summary[cat] || 0;
+    const pct = Math.min(100, Math.round((hours / 24) * 100));
+    const bg = CATEGORY_COLORS[cat];
+    const itemY = sumTop + SUM_TITLE_H + 4 + j * SUM_ITEM_H;
+    const barW = Math.max(2, Math.round((W - P * 2 - 280) * (pct / 100)));
+    html += `
+<rect x="${P+16}" y="${itemY}" width="230" height="20" rx="4" fill="${bg}"/>
+<text x="${P+16+115}" y="${itemY+14}" text-anchor="middle" class="sl">${cat}</text>
+<rect x="${P+16+238}" y="${itemY+2}" width="${W-P*2-310}" height="16" rx="8" fill="#eeeeee"/>
+<rect x="${P+16+238}" y="${itemY+2}" width="${barW}" height="16" rx="8" fill="${bg}"/>
+<text x="${W-P-12}" y="${itemY+14}" text-anchor="end" class="sv">${hours.toFixed(1)}h</text>`;
+  }
+  html += '</svg>';
+  return html;
+}
+
+// ====== DOM ======
+const chatArea = document.getElementById('chat-area');
+const msgInput = document.getElementById('msg-input');
+const btnSend = document.getElementById('btn-send');
+const dateBadge = document.getElementById('date-badge');
+const dateDivider = document.getElementById('date-divider');
+const chartContent = document.getElementById('chart-content');
+const chartModal = document.getElementById('chart-modal');
+
+// Init date badge
+dateBadge.textContent = currentDate;
+
+// ====== Chat Rendering ======
+function scrollToBottom() {
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function addUserBubble(text) {
+  const div = document.createElement('div');
+  div.className = 'flex flex-row-reverse items-start gap-3 max-w-[85%] ml-auto';
+  div.innerHTML = `<div class="bg-primary p-md rounded-xl rounded-tr-none message-shadow"><p class="font-body-md text-body-md text-on-primary"></p></div>`;
+  div.querySelector('p').textContent = text;
+  chatArea.appendChild(div);
+  scrollToBottom();
+}
+
+function addAIBubble(html) {
+  const div = document.createElement('div');
+  div.className = 'flex items-start gap-3 max-w-[85%]';
+  div.innerHTML = `<div class="w-8 h-8 rounded-full flex-shrink-0 bg-primary-fixed flex items-center justify-center"><span class="material-symbols-outlined text-on-primary-fixed text-[18px]">auto_awesome</span></div><div class="bg-white p-md rounded-xl rounded-tl-none message-shadow ai-content"></div>`;
+  div.querySelector('.ai-content').innerHTML = html;
+  chatArea.appendChild(div);
+  scrollToBottom();
+}
+
+function addChartCard(svgStr) {
+  const div = document.createElement('div');
+  div.className = 'flex items-start gap-3 max-w-[95%]';
+  div.innerHTML = `<div class="w-8 h-8 rounded-full flex-shrink-0 bg-primary-fixed flex items-center justify-center"><span class="material-symbols-outlined text-on-primary-fixed text-[18px]">auto_awesome</span></div><div class="bg-white p-3 rounded-xl rounded-tl-none message-shadow chart-card w-full"><div class="svg-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;"></div></div>`;
+  div.querySelector('.svg-wrap').innerHTML = svgStr;
+  chatArea.appendChild(div);
+  scrollToBottom();
+}
+
+function showLoading() {
+  const div = document.createElement('div');
+  div.id = 'loading-msg';
+  div.className = 'flex items-start gap-3 max-w-[85%]';
+  div.innerHTML = `<div class="w-8 h-8 rounded-full flex-shrink-0 bg-primary-fixed flex items-center justify-center"><span class="material-symbols-outlined text-on-primary-fixed text-[18px]">auto_awesome</span></div><div class="bg-white p-md rounded-xl rounded-tl-none message-shadow flex gap-1.5 items-center"><span class="loading-dot w-2 h-2 bg-primary rounded-full inline-block"></span><span class="loading-dot w-2 h-2 bg-primary rounded-full inline-block"></span><span class="loading-dot w-2 h-2 bg-primary rounded-full inline-block"></span></div>`;
+  chatArea.appendChild(div);
+  scrollToBottom();
+}
+
+function hideLoading() {
+  const el = document.getElementById('loading-msg');
+  if (el) el.remove();
+}
+
+// ====== API Calls ======
+async function apiCall(url, body) {
+  const opts = {
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (body) {
+    opts.method = 'POST';
+    opts.body = JSON.stringify(body);
+  }
+  const resp = await fetch(url, opts);
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({ error: resp.statusText }));
+    throw new Error(err.error || `HTTP ${resp.status}`);
+  }
+  return resp.json();
+}
+
+async function handleUserMessage(text) {
+  if (isLoading) return;
+  isLoading = true;
+  addUserBubble(text);
+  msgInput.value = '';
+  showLoading();
+
+  try {
+    // 1. Extract info via proxy
+    const extractResult = await apiCall('/api/proxy', { action: 'extract', text });
+
+    // 2. Build message
+    const msg = {
+      timestamp: new Date(new Date().getTime() + 8 * 3600_000).toISOString(),
+      text: text,
+      location: extractResult.location || '',
+      event: extractResult.event || text,
+      category: extractResult.category || '不知道在干什么',
+    };
+
+    // 3. Save to KV
+    await apiCall('/api/messages', { action: 'append', msg, date: currentDate });
+
+    hideLoading();
+    addAIBubble(`<p class="font-body-md text-body-md text-on-surface">收到！已记录日程。<br><span class="text-sm text-outline">📍 ${msg.location || '未指定'} | 🏷 ${msg.category}</span></p>`);
+  } catch (e) {
+    hideLoading();
+    addAIBubble(`<p class="font-body-md text-body-md text-error">记录失败: ${e.message}</p>`);
+  }
+  isLoading = false;
+}
+
+async function handlePreview() {
+  if (isLoading) return;
+  isLoading = true;
+  addAIBubble('<p class="font-body-md text-body-md text-on-surface">正在生成今日复盘图表...</p>');
+  showLoading();
+
+  try {
+    // 1. Get messages
+    const msgResp = await apiCall(`/api/messages?date=${currentDate}`);
+    if (!msgResp.messages || msgResp.messages.length === 0) {
+      hideLoading();
+      addAIBubble('<p class="font-body-md text-body-md text-on-surface">今天还没有记录任何日程，先发几条消息吧！</p>');
+      isLoading = false;
+      return;
+    }
+
+    // 2. Generate grid via proxy
+    const gridResp = await apiCall('/api/proxy', {
+      action: 'grid',
+      date: currentDate,
+      messages: msgResp.messages,
+    });
+
+    if (!gridResp.grid) {
+      throw new Error('AI 未能生成网格数据');
+    }
+
+    // 3. Build SVG
+    const svg = buildChartSvg(currentDate, gridResp.grid);
+
+    hideLoading();
+    addChartCard(svg);
+  } catch (e) {
+    hideLoading();
+    addAIBubble(`<p class="font-body-md text-body-md text-error">生成复盘失败: ${e.message}</p>`);
+  }
+  isLoading = false;
+}
+
+async function handleShowData() {
+  if (isLoading) return;
+  isLoading = true;
+  addAIBubble('<p class="font-body-md text-body-md text-on-surface">正在查询今天的记录...</p>');
+
+  try {
+    const resp = await apiCall(`/api/messages?date=${currentDate}`);
+    const msgs = resp.messages || [];
+    if (msgs.length === 0) {
+      addAIBubble('<p class="font-body-md text-body-md text-on-surface">今天还没有记录任何日程。</p>');
+    } else {
+      let html = '<p class="font-body-md text-body-md text-on-surface mb-2">今日已记录 <span class="font-bold">' + msgs.length + '</span> 条日程：</p>';
+      html += '<div class="space-y-1 mt-2">';
+      for (const m of msgs) {
+        html += `<div class="text-sm text-on-surface-variant py-1 border-b border-outline-variant/20"><span class="text-outline">${m.timestamp.slice(11,16)}</span> ${m.event || m.text} @${m.location || '未知'} <span class="text-xs bg-surface-container-low px-1.5 py-0.5 rounded">${m.category || '未分类'}</span></div>`;
+      }
+      html += '</div>';
+      addAIBubble(html);
+    }
+  } catch (e) {
+    addAIBubble(`<p class="font-body-md text-body-md text-error">查询失败: ${e.message}</p>`);
+  }
+  isLoading = false;
+}
+
+function closeChart() {
+  chartModal.classList.add('hidden');
+  chartContent.innerHTML = '';
+}
+
+// ====== Push Subscription ======
+async function subscribePush() {
+  try {
+    // Get VAPID key
+    const vapidResp = await fetch('/api/subscribe/vapid');
+    if (!vapidResp.ok) {
+      console.log('VAPID 未配置，跳过推送订阅');
+      return;
+    }
+    const { publicKey } = await vapidResp.json();
+
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+    }
+
+    // Save subscription to server
+    await fetch('/api/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(sub.toJSON()),
+    });
+    console.log('Push 订阅成功');
+  } catch (e) {
+    console.warn('Push 订阅失败:', e.message);
+  }
+}
+
+function urlBase64ToUint8Array(base64) {
+  const padding = '='.repeat((4 - base64.length % 4) % 4);
+  const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(b64);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
+
+// ====== Event Handlers ======
+btnSend.addEventListener('click', async () => {
+  const text = msgInput.value.trim();
+  if (!text) return;
+  await handleUserMessage(text);
+});
+
+msgInput.addEventListener('keydown', async (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    const text = msgInput.value.trim();
+    if (!text) return;
+    await handleUserMessage(text);
+  }
+});
+
+msgInput.addEventListener('focus', () => {
+  document.getElementById('input-wrapper').classList.add('ring-2', 'ring-primary/20');
+});
+msgInput.addEventListener('blur', () => {
+  document.getElementById('input-wrapper').classList.remove('ring-2', 'ring-primary/20');
+});
+
+// Quick action buttons
+document.querySelectorAll('.quick-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const cmd = btn.dataset.cmd;
+    if (cmd === '/预览') handlePreview();
+    else if (cmd === '/数据') handleShowData();
+  });
+});
+
+// Also handle text commands
+const origHandleMessage = handleUserMessage;
+handleUserMessage = async function(text) {
+  if (text === '/预览') {
+    await handlePreview();
+    return;
+  }
+  if (text === '/数据') {
+    await handleShowData();
+    return;
+  }
+  return origHandleMessage(text);
+};
+
+// History button: prompt for date
+document.getElementById('btn-history').addEventListener('click', () => {
+  const d = prompt('输入日期查看历史复盘 (YYYY-MM-DD)：', currentDate);
+  if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
+    currentDate = d;
+    dateBadge.textContent = d;
+    dateDivider.textContent = d;
+    addAIBubble(`<p class="font-body-md text-body-md text-on-surface">已切换到 ${d}。点击"预览"查看该日期的复盘图表。</p>`);
+  }
+});
+
+// Nav items (desktop)
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(i => {
+      i.classList.remove('bg-primary-container', 'text-on-primary-container');
+      i.classList.add('text-on-surface-variant');
+    });
+    item.classList.add('bg-primary-container', 'text-on-primary-container');
+    item.classList.remove('text-on-surface-variant');
+    const tab = item.dataset.tab;
+    if (tab === 'stats') handlePreview();
+    else if (tab === 'history') handleShowData();
+  });
+});
+
+// ====== Init ======
+async function init() {
+  // Register Service Worker
+  if ('serviceWorker' in navigator) {
+    try {
+      const reg = await navigator.serviceWorker.register('/sw.js');
+      console.log('SW registered:', reg.scope);
+      // Subscribe to push
+      if ('PushManager' in window) {
+        // Request notification permission first
+        if (Notification.permission === 'default') {
+          await Notification.requestPermission();
+        }
+        if (Notification.permission === 'granted') {
+          await subscribePush();
+        }
+      }
+    } catch (e) {
+      console.warn('SW registration failed:', e.message);
+    }
+  }
+
+  // If a date was given in URL (from notification click), load its grid
+  if (currentDate !== todayCN()) {
+    dateBadge.textContent = currentDate;
+    dateDivider.textContent = currentDate;
+    try {
+      const resp = await apiCall(`/api/messages/grid?date=${currentDate}`);
+      if (resp.grid) {
+        const svg = buildChartSvg(currentDate, resp.grid);
+        addAIBubble(`<p class="font-body-md text-body-md text-on-surface mb-2">${currentDate} 的复盘图表（零点自动生成）：</p>`);
+        addChartCard(svg);
+      }
+    } catch (e) {
+      console.log('无法加载历史网格:', e.message);
+    }
+  }
+}
+
+init();
+</script>
+</body>
+</html>

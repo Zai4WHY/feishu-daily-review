@@ -78,8 +78,8 @@ feishu-bot/
 4. ❌ 国内域名方案被否决（不想花钱 + 后续可能还有坑）
 
 ### 可能的根因
-1. **飞书国内版服务器在中国大陆**，`vercel.app` 域名被 DNS 污染/阻断
-2. **Vercel 函数冷启动**（第一次请求 1-2 秒唤醒 + 飞书 3 秒超时）
+1. 是在飞书开放平台进行请求地址的保存，不知道是飞书开放平台的服务器还是国内版服务器在去测试我们的请求地址，总之有可能，`vercel.app` 域名被 DNS 污染/阻断。
+2. **Vercel 函数冷启动**，目前测试最快需要6s( response = Invoke-WebRequest -Uri "https://feishu-daily-review.vercel.app/api/feishu" -Method POST -ContentType "application/json" -Body $body  )（第一次请求 1-2 秒唤醒 + 飞书 3 秒超时）
 3. 两者叠加
 
 ## 需要讨论的方向

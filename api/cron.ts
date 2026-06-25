@@ -1,15 +1,21 @@
 /**
- * 零点定时任务 —— 生成每日日程汇总图片并推送
+ * 零点定时任务 —— 生成每日日程汇总并推送
  * Vercel cron 在 UTC 16:00（= 北京时间 00:00）触发
  */
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getMessages } from "../lib/storage.js";
+import webpush from "web-push";
+import { getMessages, saveGrid, getSubscriptions } from "../lib/storage.js";
 import { generateGrid } from "../lib/deepseek.js";
-import { sendMessage, uploadImage, sendImageMessage } from "../lib/feishu.js";
-// chart 模块依赖原生绑定，动态导入
 
-const USER_ID = process.env.FEISHU_USER_ID!;
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY!;
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY!;
+const VAPID_EMAIL = process.env.VAPID_EMAIL || "mailto:example@example.com";
+
+// 初始化 web-push
+if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+}
 
 /** 北京时间昨天的日期 YYYY-MM-DD */
 function yesterdayCN(): string {
@@ -27,7 +33,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (messages.length === 0) {
       console.log(`[Cron] ${date} 没有日程消息`);
-      await sendMessage(USER_ID, `${date} 没有记录任何日程。记得随时告诉我你在做什么~`);
       return res.status(200).json({ ok: true, message: "no messages" });
     }
 
@@ -36,27 +41,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 1. AI 生成48槽网格
     const grid = await generateGrid(date, messages);
 
-    // 2. 渲染为图片（动态导入）
-    console.log(`[Cron] 渲染图表...`);
-    const { renderChart } = await import("../lib/chart.js");
-    const imageBuffer = await renderChart(date, grid);
+    // 2. 保存网格到 KV
+    console.log(`[Cron] 保存网格到 KV...`);
+    await saveGrid(date, grid);
 
-    // 3. 上传飞书
-    console.log(`[Cron] 上传图片...`);
-    const imageKey = await uploadImage(imageBuffer);
+    // 3. 发送 Web Push 通知
+    const subscriptions = await getSubscriptions();
+    console.log(`[Cron] 共 ${subscriptions.length} 个订阅，发送推送...`);
 
-    // 4. 发送图片
-    console.log(`[Cron] 发送图片...`);
-    await sendImageMessage(USER_ID, imageKey);
+    if (subscriptions.length > 0 && VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+      const payload = JSON.stringify({
+        title: "昨日日程复盘已生成",
+        body: `${date} 的日程汇总已准备好，点击查看`,
+        icon: "/icon-192.png",
+        data: { date },
+      });
 
-    console.log(`[Cron] ${date} 汇总已发送`);
+      const results = await Promise.allSettled(
+        subscriptions.map((sub) =>
+          webpush.sendNotification(sub as any, payload).catch((err: any) => {
+            console.error(`[Cron] 推送失败 (${sub.endpoint?.slice(0, 40)}...):`, err.statusCode, err.message);
+            throw err;
+          })
+        )
+      );
 
+      const successCount = results.filter((r) => r.status === "fulfilled").length;
+      console.log(`[Cron] 推送完成: ${successCount}/${subscriptions.length} 成功`);
+    }
+
+    console.log(`[Cron] ${date} 汇总完成`);
     return res.status(200).json({ ok: true, count: messages.length });
   } catch (e: any) {
     console.error(`[Cron] 生成汇总失败:`, e);
-    try {
-      await sendMessage(USER_ID, `日程复盘失败: ${e.message}`);
-    } catch {}
     return res.status(500).json({ error: e.message });
   }
 }

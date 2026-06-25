@@ -1,6 +1,6 @@
 /**
- * 图表渲染：将 DailyGrid 数据绘制为 PNG 图片
- * 直接生成 SVG 字符串 → @resvg/resvg-wasm 转换为 PNG
+ * 图表渲染：将 DailyGrid 数据构建为 SVG 字符串
+ * SVG 直接嵌入前端 DOM，无需 PNG 转换
  */
 
 import type { DailyGrid } from "./types.js";
@@ -13,25 +13,8 @@ const SUMMARY_TITLE_H = 30;
 const SUMMARY_ITEM_H = 28;
 const BORDER_COLOR = "#e0e0e0";
 
-/** 将 DailyGrid 渲染为 PNG Buffer */
-export async function renderChart(
-  date: string,
-  grid: DailyGrid
-): Promise<Buffer> {
-  const svg = buildSvg(date, grid);
-
-  // 动态导入 WASM 版本（Vercel serverless 兼容）
-  const { Resvg } = await import("@resvg/resvg-wasm");
-  const resvg = new Resvg(svg, {
-    fitTo: { mode: "width", value: WIDTH * 2 },
-  });
-  const image = resvg.render();
-  const pngBuffer = image.asPng();
-  return Buffer.from(pngBuffer);
-}
-
-/** 构建 SVG 字符串 */
-function buildSvg(date: string, grid: DailyGrid): string {
+/** 构建可嵌入 DOM 的 SVG 字符串 */
+export function buildSvg(date: string, grid: DailyGrid): string {
   const colTime = 120;
   const colAct = 360;
   const colLoc = WIDTH - PADDING * 2 - colTime - colAct;
@@ -42,7 +25,7 @@ function buildSvg(date: string, grid: DailyGrid): string {
   const svgH = PADDING + TITLE_H + 8 + headerH + tableBodyH + 20 + summaryH + PADDING;
 
   let html = `
-<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${svgH}">
+<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${svgH}" viewBox="0 0 ${WIDTH} ${svgH}">
   <rect width="100%" height="100%" fill="#ffffff"/>
   <style>
     text { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
