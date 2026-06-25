@@ -228,6 +228,7 @@ const CATEGORIES = Object.keys(CATEGORY_COLORS);
 // ====== State ======
 let currentDate = getDateFromURL() || todayCN();
 let isLoading = false;
+let sessionMessages = [];  // 浏览器内存存储（当天消息）
 
 // ====== Helpers ======
 function todayCN() {
@@ -421,8 +422,8 @@ async function handleUserMessage(text) {
       category: extractResult.category || '不知道在干什么',
     };
 
-    // 3. Save to KV
-    await apiCall('/api/messages', { action: 'append', msg, date: currentDate });
+    // 3. 暂存浏览器内存（无需数据库）
+    sessionMessages.push(msg);
 
     hideLoading();
     addAIBubble(`<p class="font-body-md text-body-md text-on-surface">收到！已记录日程。<br><span class="text-sm text-outline">📍 ${msg.location || '未指定'} | 🏷 ${msg.category}</span></p>`);
@@ -440,20 +441,18 @@ async function handlePreview() {
   showLoading();
 
   try {
-    // 1. Get messages
-    const msgResp = await apiCall(`/api/messages?date=${currentDate}`);
-    if (!msgResp.messages || msgResp.messages.length === 0) {
+    if (sessionMessages.length === 0) {
       hideLoading();
       addAIBubble('<p class="font-body-md text-body-md text-on-surface">今天还没有记录任何日程，先发几条消息吧！</p>');
       isLoading = false;
       return;
     }
 
-    // 2. Generate grid via proxy
+    // Generate grid via proxy（用内存中暂存的消息）
     const gridResp = await apiCall('/api/proxy', {
       action: 'grid',
       date: currentDate,
-      messages: msgResp.messages,
+      messages: sessionMessages,
     });
 
     if (!gridResp.grid) {
@@ -478,14 +477,12 @@ async function handleShowData() {
   addAIBubble('<p class="font-body-md text-body-md text-on-surface">正在查询今天的记录...</p>');
 
   try {
-    const resp = await apiCall(`/api/messages?date=${currentDate}`);
-    const msgs = resp.messages || [];
-    if (msgs.length === 0) {
+    if (sessionMessages.length === 0) {
       addAIBubble('<p class="font-body-md text-body-md text-on-surface">今天还没有记录任何日程。</p>');
     } else {
-      let html = '<p class="font-body-md text-body-md text-on-surface mb-2">今日已记录 <span class="font-bold">' + msgs.length + '</span> 条日程：</p>';
+      let html = '<p class="font-body-md text-body-md text-on-surface mb-2">今日已记录 <span class="font-bold">' + sessionMessages.length + '</span> 条日程：</p>';
       html += '<div class="space-y-1 mt-2">';
-      for (const m of msgs) {
+      for (const m of sessionMessages) {
         html += `<div class="text-sm text-on-surface-variant py-1 border-b border-outline-variant/20"><span class="text-outline">${m.timestamp.slice(11,16)}</span> ${m.event || m.text} @${m.location || '未知'} <span class="text-xs bg-surface-container-low px-1.5 py-0.5 rounded">${m.category || '未分类'}</span></div>`;
       }
       html += '</div>';
@@ -573,20 +570,10 @@ async function init() {
     }
   }
 
-  // If a date was given in URL (from notification click), load its grid
   if (currentDate !== todayCN()) {
     dateBadge.textContent = currentDate;
     dateDivider.textContent = currentDate;
-    try {
-      const resp = await apiCall(`/api/messages/grid?date=${currentDate}`);
-      if (resp.grid) {
-        const svg = buildChartSvg(currentDate, resp.grid);
-        addAIBubble(`<p class="font-body-md text-body-md text-on-surface mb-2">${currentDate} 的复盘图表（零点自动生成）：</p>`);
-        addChartCard(svg);
-      }
-    } catch (e) {
-      console.log('无法加载历史网格:', e.message);
-    }
+    // 历史日期的数据需等后续接入数据库后才能查看
   }
 }
 
