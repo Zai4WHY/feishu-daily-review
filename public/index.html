@@ -582,6 +582,8 @@ const btnSaveRule = document.getElementById('btn-save-rule');
 customRuleInput.value = localStorage.getItem('customRule') || '';
 
 document.getElementById('btn-settings').addEventListener('click', () => {
+  // 每次打开弹窗时重新加载已保存的内容，避免显示过期的内存值
+  customRuleInput.value = localStorage.getItem('customRule') || '';
   settingsModal.classList.remove('hidden');
 });
 
