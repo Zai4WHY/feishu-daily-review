@@ -199,21 +199,6 @@ tailwind.config = {
   </div>
 </footer>
 
-<!-- Bottom Navigation (Desktop) -->
-<nav class="hidden md:flex fixed bottom-0 left-0 right-0 bg-surface/90 backdrop-blur-lg border-t border-outline-variant/30 justify-around items-center px-4 py-2 w-full z-40">
-  <div class="nav-item flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full p-3 transition-all" data-tab="chat">
-    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
-  </div>
-  <div class="nav-item flex flex-col items-center justify-center text-on-surface-variant p-3 hover:bg-secondary-container/50 transition-all rounded-full" data-tab="history">
-    <span class="material-symbols-outlined">event_note</span>
-  </div>
-  <div class="nav-item flex flex-col items-center justify-center text-on-surface-variant p-3 hover:bg-secondary-container/50 transition-all rounded-full" data-tab="stats">
-    <span class="material-symbols-outlined">insights</span>
-  </div>
-  <div class="nav-item flex flex-col items-center justify-center text-on-surface-variant p-3 hover:bg-secondary-container/50 transition-all rounded-full" data-tab="settings">
-    <span class="material-symbols-outlined">settings</span>
-  </div>
-</nav>
 
 <!-- Toast -->
 <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-on-surface text-white px-4 py-2 rounded-full shadow-lg opacity-0 pointer-events-none z-50 text-sm transition-all" style="transform: translate(-50%, -20px);"></div>
@@ -575,20 +560,6 @@ document.getElementById('btn-history').addEventListener('click', () => {
   }
 });
 
-// Nav items (desktop)
-document.querySelectorAll('.nav-item').forEach(item => {
-  item.addEventListener('click', () => {
-    document.querySelectorAll('.nav-item').forEach(i => {
-      i.classList.remove('bg-primary-container', 'text-on-primary-container');
-      i.classList.add('text-on-surface-variant');
-    });
-    item.classList.add('bg-primary-container', 'text-on-primary-container');
-    item.classList.remove('text-on-surface-variant');
-    const tab = item.dataset.tab;
-    if (tab === 'stats') handlePreview();
-    else if (tab === 'history') handleShowData();
-  });
-});
 
 // ====== Init ======
 async function init() {
