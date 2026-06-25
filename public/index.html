@@ -157,6 +157,9 @@ tailwind.config = {
     <button id="btn-history" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant" title="历史">
       <span class="material-symbols-outlined">history</span>
     </button>
+    <button id="btn-settings" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant" title="修改分类标准">
+      <span class="material-symbols-outlined">tune</span>
+    </button>
   </div>
 </header>
 
@@ -202,6 +205,26 @@ tailwind.config = {
 
 <!-- Toast -->
 <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-on-surface text-white px-4 py-2 rounded-full shadow-lg opacity-0 pointer-events-none z-50 text-sm transition-all" style="transform: translate(-50%, -20px);"></div>
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="hidden fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-auto relative">
+    <button onclick="closeSettings()" class="sticky top-3 right-3 float-right w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center hover:bg-surface-container-highest z-10">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+    <div class="p-6">
+      <h2 class="font-headline-md text-headline-md text-on-surface mb-4">修改分类标准</h2>
+      <textarea id="custom-rule-input" class="w-full h-40 rounded-xl border border-outline-variant/30 bg-surface-container-low p-4 font-body-md text-body-md text-on-surface placeholder:text-outline resize-none focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="请输入对于你来说什么是：
+- 上课/科研
+- 实习/找工作
+- 劳动
+- 主线
+- 其它非常不想做但是被迫做的事
+- 不知道在干什么"></textarea>
+      <button id="btn-save-rule" class="mt-4 w-full py-3 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-md active:scale-95 transition-transform">保存</button>
+    </div>
+  </div>
+</div>
 
 <!-- SVG Chart Modal -->
 <div id="chart-modal" class="hidden fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onclick="if(event.target===this)closeChart()">
@@ -410,8 +433,12 @@ async function handleUserMessage(text) {
   showLoading();
 
   try {
-    // 1. Extract info via proxy
-    const extractResult = await apiCall('/api/proxy', { action: 'extract', text });
+    // 1. Extract info via proxy（附带用户自定义分类标准）
+    const extractResult = await apiCall('/api/proxy', {
+      action: 'extract',
+      text,
+      customRule: localStorage.getItem('customRule') || '',
+    });
 
     // 2. Build message
     const msg = {
@@ -545,6 +572,29 @@ handleUserMessage = async function(text) {
   }
   return origHandleMessage(text);
 };
+
+// Settings modal
+const settingsModal = document.getElementById('settings-modal');
+const customRuleInput = document.getElementById('custom-rule-input');
+const btnSaveRule = document.getElementById('btn-save-rule');
+
+// 加载已保存的分类标准
+customRuleInput.value = localStorage.getItem('customRule') || '';
+
+document.getElementById('btn-settings').addEventListener('click', () => {
+  settingsModal.classList.remove('hidden');
+});
+
+function closeSettings() {
+  settingsModal.classList.add('hidden');
+}
+
+btnSaveRule.addEventListener('click', () => {
+  const rule = customRuleInput.value.trim();
+  localStorage.setItem('customRule', rule);
+  closeSettings();
+  showToast('分类标准已保存');
+});
 
 // History button: prompt for date
 document.getElementById('btn-history').addEventListener('click', () => {

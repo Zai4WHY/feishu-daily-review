@@ -13,18 +13,19 @@ const client = new OpenAI({
 });
 
 /** 从用户消息中提取地点和事件 */
-export async function extractInfo(text: string): Promise<{
+export async function extractInfo(text: string, customRule?: string): Promise<{
   location: string;
   event: string;
   category: string;
 }> {
+  const ruleSection = customRule ? `\n\n分类标准：${customRule}\n` : "";
+
   const prompt = `用户发了一条日程消息，请提取其中的地点、事件，并判断事件分类。
 
 消息内容："${text}"
 
 事件分类（只能从以下选一个）：
-${CATEGORIES.map((c) => `- ${c}`).join("\n")}
-
+${CATEGORIES.map((c) => `- ${c}`).join("\n")}${ruleSection}
 请只返回 JSON，不要其他内容：
 {"location": "地点名（没有则空字符串）", "event": "事件描述", "category": "分类名"}`;
 
