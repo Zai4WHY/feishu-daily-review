@@ -141,7 +141,7 @@ tailwind.config = {
     40% { transform: scale(1); }
   }
   header {
-    padding-top: env(safe-area-inset-top);
+    padding-top: max(env(safe-area-inset-top), 8px);
   }
   main {
     padding-top: calc(env(safe-area-inset-top) + 5rem); /* 5rem = pt-20 */
