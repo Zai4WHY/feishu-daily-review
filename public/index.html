@@ -129,7 +129,7 @@ tailwind.config = {
   }
   .chart-card svg {
     display: block;
-    min-width: 860px;
+    min-width: 500px;
   }
   .loading-dot {
     animation: bounce 1.4s infinite both;
@@ -268,6 +268,23 @@ function escXml(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function measureTextWidth(text, fontSize) {
+  let w = 0;
+  for (const ch of text) {
+    const code = ch.codePointAt(0);
+    if ((code >= 0x4e00 && code <= 0x9fff) ||
+        (code >= 0x3400 && code <= 0x4dbf) ||
+        (code >= 0x3000 && code <= 0x303f) ||
+        (code >= 0xff00 && code <= 0xffef) ||
+        code >= 0x20000) {
+      w += fontSize;
+    } else {
+      w += fontSize * 0.55;
+    }
+  }
+  return w;
+}
+
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -282,9 +299,19 @@ function showToast(msg) {
 
 // ====== SVG Builder (mirrors lib/chart.ts buildSvg) ======
 function buildChartSvg(date, grid) {
-  const W = 860, P = 16, TITLE_H = 56, SUM_TITLE_H = 30, SUM_ITEM_H = 28;
-  const colTime = 120, colAct = 360;
-  const colLoc = W - P * 2 - colTime - colAct;
+  const colTime = 120, P = 16, TITLE_H = 56, SUM_TITLE_H = 30, SUM_ITEM_H = 28;
+  const FONT = 12, CELL_PAD = 16, MIN_COL = 4 * FONT + CELL_PAD; // 64px
+
+  // 动态计算活动和地点列宽
+  let maxActW = 0, maxLocW = 0;
+  for (const s of grid.slots) {
+    maxActW = Math.max(maxActW, measureTextWidth(s.activity, FONT));
+    maxLocW = Math.max(maxLocW, measureTextWidth(s.location, FONT));
+  }
+  const colAct = Math.max(MIN_COL, Math.ceil(maxActW) + CELL_PAD);
+  const colLoc = Math.max(MIN_COL, Math.ceil(maxLocW) + CELL_PAD);
+  const W = Math.min(860, Math.max(500, P * 2 + colTime + colAct + colLoc));
+
   const rowH = 25, headerH = 34;
   const tableBodyH = grid.slots.length * rowH;
   const summaryH = SUM_TITLE_H + CATEGORIES.length * SUM_ITEM_H + 20;
