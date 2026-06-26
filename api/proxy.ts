@@ -21,7 +21,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { action, text, date, messages, customRule } = req.body || {};
+  const { action, text, date, messages, customRule, preview } = req.body || {};
 
   try {
     if (action === "extract") {
@@ -36,7 +36,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!date || !messages) {
         return res.status(400).json({ error: "缺少 date 或 messages 参数" });
       }
-      const grid = await generateGrid(date, messages);
+      // 预览模式：追加一条"当前时间→未知"的假消息，之后槽全部未知
+      const gridMessages = preview
+        ? [
+            ...messages,
+            {
+              timestamp: new Date(new Date().getTime() + 8 * 3600_000).toISOString(),
+              location: "",
+              event: "未知",
+              category: "不知道在干什么",
+            },
+          ]
+        : messages;
+      const grid = await generateGrid(date, gridMessages);
       return res.status(200).json({ ok: true, grid });
     }
 

@@ -84,7 +84,7 @@ export function generateGrid(
     segments.push({
       start,
       end,
-      activity: m.event || m.text || "",
+      activity: m.event || "",
       location: m.location || "",
       category: m.category || "不知道在干什么",
     });

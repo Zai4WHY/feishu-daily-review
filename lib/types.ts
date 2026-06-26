@@ -2,14 +2,12 @@
 export interface ScheduleMessage {
   /** ISO 时间戳 */
   timestamp: string;
-  /** 用户原始文本 */
-  text: string;
   /** AI 提取的地点 */
-  location?: string;
+  location: string;
   /** AI 提取的事件 */
-  event?: string;
+  event: string;
   /** AI 分类 */
-  category?: string;
+  category: string;
 }
 
 /** 一个30分钟时间槽 */
