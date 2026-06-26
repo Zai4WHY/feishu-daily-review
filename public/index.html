@@ -5,7 +5,7 @@
 <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
 <meta name="theme-color" content="#47645e">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="日程复盘">
 <link rel="manifest" href="/manifest.json">
 <title>日程复盘助手</title>
@@ -115,7 +115,7 @@ tailwind.config = {
     box-shadow: 0 4px 12px rgba(71, 100, 94, 0.06);
   }
   .chat-container {
-    height: calc(100vh - 140px - env(safe-area-inset-top));
+    height: calc(100vh - 140px);
   }
   .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -139,12 +139,6 @@ tailwind.config = {
   @keyframes bounce {
     0%, 80%, 100% { transform: scale(0); }
     40% { transform: scale(1); }
-  }
-  header {
-    padding-top: max(env(safe-area-inset-top), 8px);
-  }
-  main {
-    padding-top: calc(env(safe-area-inset-top) + 5rem); /* 5rem = pt-20 */
   }
   #toast {
     transition: transform 0.3s ease, opacity 0.3s ease;
@@ -170,7 +164,7 @@ tailwind.config = {
 </header>
 
 <!-- Main Chat Content -->
-<main id="chat-area" class="flex-grow pb-28 px-margin-mobile chat-container overflow-y-auto space-y-lg">
+<main id="chat-area" class="flex-grow pt-20 pb-28 px-margin-mobile chat-container overflow-y-auto space-y-lg">
   <!-- AI Welcome -->
   <div class="flex justify-center">
     <span class="font-label-sm text-label-sm text-outline px-4 py-1 bg-surface-container-low rounded-full" id="date-divider">今天</span>
