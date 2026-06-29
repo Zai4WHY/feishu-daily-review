@@ -6,7 +6,8 @@
  */
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getMessages, appendMessage, clearMessages, getGrid } from "../lib/storage.js";
+import { getMessages, appendMessage, clearMessages, getGrid, saveGrid } from "../lib/storage.js";
+import { generateGrid } from "../lib/deepseek.js";
 
 /** 北京时间今天的日期 */
 function todayCN(): string {
@@ -32,11 +33,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // GET /api/messages/grid?date=YYYY-MM-DD
     if (req.method === "GET" && path.endsWith("/grid")) {
-      const grid = await getGrid(date);
+      let grid = await getGrid(date);
       if (!grid) {
-        return res.status(200).json({ ok: true, grid: null, message: "网格尚未生成" });
+        const messages = await getMessages(date);
+        if (messages.length > 0) {
+          grid = generateGrid(date, messages);
+          await saveGrid(date, grid);
+        }
       }
-      return res.status(200).json({ ok: true, grid });
+      return res.status(200).json({ ok: true, grid: grid || null });
     }
 
     // GET /api/messages?date=YYYY-MM-DD

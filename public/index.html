@@ -421,6 +421,27 @@ function addChartCard(svgStr) {
   scrollToBottom();
 }
 
+function addCollapsibleCard(date, svgHtml) {
+  const div = document.createElement('div');
+  div.className = 'flex items-start gap-3 max-w-[95%]';
+  const id = 'collapsible-' + Date.now();
+  div.innerHTML = `<div class="w-8 h-8 rounded-full flex-shrink-0 bg-primary-fixed flex items-center justify-center"><span class="material-symbols-outlined text-on-primary-fixed text-[18px]">auto_awesome</span></div><div class="bg-white rounded-xl rounded-tl-none message-shadow w-full"><div class="flex items-center justify-between px-4 py-3 cursor-pointer select-none collapsible-header" data-target="${id}"><span class="font-label-md text-label-md text-on-surface">${date} 复盘</span><span class="material-symbols-outlined text-outline collapsible-icon transition-transform">expand_more</span></div><div id="${id}" class="hidden px-4 pb-4"><div class="svg-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;"></div></div></div>`;
+  div.querySelector('.svg-wrap').innerHTML = svgHtml;
+  div.querySelector('.collapsible-header').addEventListener('click', function() {
+    const body = document.getElementById(this.dataset.target);
+    const icon = this.querySelector('.collapsible-icon');
+    if (body.classList.contains('hidden')) {
+      body.classList.remove('hidden');
+      icon.style.transform = 'rotate(180deg)';
+    } else {
+      body.classList.add('hidden');
+      icon.style.transform = 'rotate(0deg)';
+    }
+  });
+  chatArea.appendChild(div);
+  scrollToBottom();
+}
+
 function showLoading() {
   const div = document.createElement('div');
   div.id = 'loading-msg';
@@ -475,8 +496,10 @@ async function handleUserMessage(text) {
       category: extractResult.category || '不知道在干什么',
     };
 
-    // 3. 暂存浏览器内存（无需数据库）
+    // 3. 暂存浏览器内存 + 存 KV
     sessionMessages.push(msg);
+    apiCall('/api/messages', { action: 'append', msg })
+      .catch(e => console.warn('KV save failed:', e));
 
     hideLoading();
     addAIBubble(`<p class="font-body-md text-body-md text-on-surface">收到！已记录日程。<br><span class="text-sm text-outline">📍 ${msg.location || '未指定'} | 🏷 ${msg.category}</span></p>`);
@@ -652,7 +675,42 @@ async function init() {
   if (currentDate !== todayCN()) {
     dateBadge.textContent = currentDate;
     dateDivider.textContent = currentDate;
-    // 历史日期的数据需等后续接入数据库后才能查看
+  }
+
+  // Restore today's messages from KV
+  try {
+    const resp = await fetch('/api/messages?date=' + encodeURIComponent(todayCN()));
+    const data = await resp.json();
+    if (data.ok && data.messages && data.messages.length > 0) {
+      // Remove welcome message
+      const welcomeEl = chatArea.querySelector('.flex.items-start.gap-3');
+      if (welcomeEl) welcomeEl.remove();
+      // Restore messages
+      sessionMessages = data.messages;
+      for (const m of sessionMessages) {
+        addAIBubble(`<p class="font-body-md text-body-md text-on-surface">已恢复记录。<br><span class="text-sm text-outline">📍 ${m.location || '未指定'} | 🏷 ${m.category || '未知'}</span></p>`);
+      }
+    }
+  } catch (e) {
+    console.warn('Restore messages failed:', e);
+  }
+
+  // Load past 7 days grids
+  const today = new Date(new Date().getTime() + 8 * 3600_000);
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const ds = d.toISOString().slice(0, 10);
+    try {
+      const resp = await fetch('/api/messages/grid?date=' + encodeURIComponent(ds));
+      const data = await resp.json();
+      if (data.ok && data.grid) {
+        const svg = buildChartSvg(ds, data.grid);
+        addCollapsibleCard(ds, svg);
+      }
+    } catch (e) {
+      console.warn('Load grid failed for', ds, e);
+    }
   }
 }
 
