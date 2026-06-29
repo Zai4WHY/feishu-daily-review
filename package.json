@@ -8,7 +8,7 @@
     "deploy": "vercel --prod"
   },
   "dependencies": {
-    "@vercel/kv": "^1.0.1",
+    "@upstash/redis": "^1.34.0",
     "openai": "^4.73.0"
   },
   "devDependencies": {

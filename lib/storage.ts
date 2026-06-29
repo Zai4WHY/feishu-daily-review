@@ -1,10 +1,11 @@
 /**
- * Vercel KV 存储操作
+ * Upstash Redis 存储操作
  */
 
-import { kv } from "@vercel/kv";
+import { Redis } from "@upstash/redis";
 import type { ScheduleMessage, DailyGrid } from "./types.js";
 
+const redis = Redis.fromEnv();
 const USER_ID = process.env.SUBSCRIBER_ID || "default";
 
 /** 消息存储 key */
@@ -19,8 +20,9 @@ function gridKey(date: string): string {
 
 /** 获取某天的所有消息 */
 export async function getMessages(date: string): Promise<ScheduleMessage[]> {
-  const msgs = await kv.lrange<ScheduleMessage>(messageKey(date), 0, -1);
-  return msgs || [];
+  const msgs = await redis.lrange(messageKey(date), 0, -1);
+  if (!msgs || msgs.length === 0) return [];
+  return msgs.map((m: string) => JSON.parse(m) as ScheduleMessage);
 }
 
 /** 追加一条消息到某天 */
@@ -28,25 +30,27 @@ export async function appendMessage(
   date: string,
   msg: ScheduleMessage
 ): Promise<void> {
-  await kv.rpush(messageKey(date), msg);
-  await kv.expire(messageKey(date), 7 * 24 * 3600);
+  await redis.rpush(messageKey(date), JSON.stringify(msg));
+  await redis.expire(messageKey(date), 7 * 24 * 3600);
 }
 
 /** 删除某天的消息 */
 export async function clearMessages(date: string): Promise<void> {
-  await kv.del(messageKey(date));
+  await redis.del(messageKey(date));
 }
 
-/** 保存零点生成的网格到 KV */
+/** 保存零点生成的网格到 Redis */
 export async function saveGrid(
   date: string,
   grid: DailyGrid
 ): Promise<void> {
-  await kv.set(gridKey(date), grid);
-  await kv.expire(gridKey(date), 7 * 24 * 3600);
+  await redis.set(gridKey(date), JSON.stringify(grid));
+  await redis.expire(gridKey(date), 7 * 24 * 3600);
 }
 
 /** 获取零点生成的网格 */
 export async function getGrid(date: string): Promise<DailyGrid | null> {
-  return await kv.get<DailyGrid>(gridKey(date));
+  const raw = await redis.get(gridKey(date));
+  if (!raw) return null;
+  return JSON.parse(raw as string) as DailyGrid;
 }
