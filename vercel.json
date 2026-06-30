@@ -13,5 +13,8 @@
       "memory": 1024,
       "maxDuration": 120
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/api/messages/grid", "destination": "/api/messages" }
+  ]
 }

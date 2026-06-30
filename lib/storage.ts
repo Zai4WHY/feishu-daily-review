@@ -23,9 +23,9 @@ function gridKey(date: string): string {
 
 /** 获取某天的所有消息 */
 export async function getMessages(date: string): Promise<ScheduleMessage[]> {
-  const msgs = await redis.lrange(messageKey(date), 0, -1);
+  const msgs = await redis.lrange<ScheduleMessage>(messageKey(date), 0, -1);
   if (!msgs || msgs.length === 0) return [];
-  return msgs.map((m: string) => JSON.parse(m) as ScheduleMessage);
+  return msgs;
 }
 
 /** 追加一条消息到某天 */
@@ -53,7 +53,5 @@ export async function saveGrid(
 
 /** 获取零点生成的网格 */
 export async function getGrid(date: string): Promise<DailyGrid | null> {
-  const raw = await redis.get(gridKey(date));
-  if (!raw) return null;
-  return JSON.parse(raw as string) as DailyGrid;
+  return await redis.get<DailyGrid>(gridKey(date));
 }
