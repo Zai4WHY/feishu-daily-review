@@ -5,7 +5,10 @@
 import { Redis } from "@upstash/redis";
 import type { ScheduleMessage, DailyGrid } from "./types.js";
 
-const redis = Redis.fromEnv();
+const redis = new Redis({
+  url: process.env.KV_REST_API_URL!,
+  token: process.env.KV_REST_API_TOKEN!,
+});
 const USER_ID = process.env.SUBSCRIBER_ID || "default";
 
 /** 消息存储 key */
