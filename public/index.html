@@ -677,6 +677,24 @@ async function init() {
     dateDivider.textContent = currentDate;
   }
 
+  // Load past 6 days grids (skip today)
+  const today = new Date(new Date().getTime() + 8 * 3600_000);
+  for (let i = 1; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const ds = d.toISOString().slice(0, 10);
+    try {
+      const resp = await fetch('/api/messages/grid?date=' + encodeURIComponent(ds));
+      const data = await resp.json();
+      if (data.ok && data.grid) {
+        const svg = buildChartSvg(ds, data.grid);
+        addCollapsibleCard(ds, svg);
+      }
+    } catch (e) {
+      console.warn('Load grid failed for', ds, e);
+    }
+  }
+
   // Restore today's messages from KV
   try {
     const resp = await fetch('/api/messages?date=' + encodeURIComponent(todayCN()));
@@ -693,24 +711,6 @@ async function init() {
     }
   } catch (e) {
     console.warn('Restore messages failed:', e);
-  }
-
-  // Load past 7 days grids
-  const today = new Date(new Date().getTime() + 8 * 3600_000);
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const ds = d.toISOString().slice(0, 10);
-    try {
-      const resp = await fetch('/api/messages/grid?date=' + encodeURIComponent(ds));
-      const data = await resp.json();
-      if (data.ok && data.grid) {
-        const svg = buildChartSvg(ds, data.grid);
-        addCollapsibleCard(ds, svg);
-      }
-    } catch (e) {
-      console.warn('Load grid failed for', ds, e);
-    }
   }
 }
 
