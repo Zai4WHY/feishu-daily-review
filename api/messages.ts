@@ -31,8 +31,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const date = url.searchParams.get("date") || todayCN();
 
   try {
-    // GET /api/messages/grid?date=YYYY-MM-DD
-    if (req.method === "GET" && path.endsWith("/grid")) {
+    // GET /api/messages?type=grid&date=YYYY-MM-DD
+    if (req.method === "GET" && url.searchParams.get("type") === "grid") {
       let grid = await getGrid(date);
       if (!grid) {
         const messages = await getMessages(date);

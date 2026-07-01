@@ -684,7 +684,7 @@ async function init() {
     d.setDate(d.getDate() - i);
     const ds = d.toISOString().slice(0, 10);
     try {
-      const resp = await fetch('/api/messages/grid?date=' + encodeURIComponent(ds));
+      const resp = await fetch('/api/messages?type=grid&date=' + encodeURIComponent(ds));
       const data = await resp.json();
       if (data.ok && data.grid) {
         const svg = buildChartSvg(ds, data.grid);
