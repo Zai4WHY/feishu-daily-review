@@ -425,7 +425,7 @@ function addCollapsibleCard(date, svgHtml) {
   const div = document.createElement('div');
   div.className = 'flex items-start gap-3 max-w-[95%]';
   const id = 'collapsible-' + Date.now();
-  div.innerHTML = `<div class="w-8 h-8 rounded-full flex-shrink-0 bg-primary-fixed flex items-center justify-center"><span class="material-symbols-outlined text-on-primary-fixed text-[18px]">auto_awesome</span></div><div class="bg-white rounded-xl rounded-tl-none message-shadow w-full"><div class="flex items-center justify-between px-4 py-3 cursor-pointer select-none collapsible-header" data-target="${id}"><span class="font-label-md text-label-md text-on-surface">${date} 复盘</span><span class="material-symbols-outlined text-outline collapsible-icon transition-transform">expand_more</span></div><div id="${id}" class="hidden px-4 pb-4"><div class="svg-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;"></div></div></div>`;
+  div.innerHTML = `<div class="w-8 h-8 rounded-full flex-shrink-0 bg-primary-fixed flex items-center justify-center"><span class="material-symbols-outlined text-on-primary-fixed text-[18px]">auto_awesome</span></div><div class="bg-white rounded-xl rounded-tl-none message-shadow w-full"><div class="flex items-center justify-between px-4 py-3 cursor-pointer select-none collapsible-header" data-target="${id}"><span class="font-label-md text-label-md text-on-surface">${date} 复盘</span><span class="material-symbols-outlined text-outline collapsible-icon transition-transform">expand_more</span></div><div id="${id}" class="hidden px-4 pb-4"><div class="svg-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;"></div><div class="flex justify-start mt-3"><button class="btn-download-svg flex items-center gap-1 px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface-variant text-sm hover:bg-primary-fixed/50 transition-colors" data-svg-wrap><span class="material-symbols-outlined text-[16px]">download</span><span class="text-xs">保存图片</span></button></div></div></div>`;
   div.querySelector('.svg-wrap').innerHTML = svgHtml;
   div.querySelector('.collapsible-header').addEventListener('click', function() {
     const body = document.getElementById(this.dataset.target);
@@ -437,6 +437,10 @@ function addCollapsibleCard(date, svgHtml) {
       body.classList.add('hidden');
       icon.style.transform = 'rotate(0deg)';
     }
+  });
+  div.querySelector('.btn-download-svg').addEventListener('click', function() {
+    const svgWrap = this.closest('.bg-white').querySelector('.svg-wrap');
+    if (svgWrap) downloadSvgAsImage(svgWrap);
   });
   chatArea.appendChild(div);
   scrollToBottom();
@@ -574,6 +578,40 @@ async function handleShowData() {
 function closeChart() {
   chartModal.classList.add('hidden');
   chartContent.innerHTML = '';
+}
+
+function downloadSvgAsImage(svgWrap) {
+  const svgEl = svgWrap.querySelector('svg');
+  if (!svgEl) return;
+
+  // Extract date from the card header for filename
+  const card = svgWrap.closest('.bg-white');
+  const header = card ? card.querySelector('.font-label-md') : null;
+  const dateText = header ? header.textContent.replace(' 复盘', '') : 'unknown';
+
+  const svgStr = new XMLSerializer().serializeToString(svgEl);
+  const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+
+  const img = new Image();
+  img.onload = function() {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    // White background (transparent canvas turns black in PNG)
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+    canvas.toBlob(function(pngBlob) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(pngBlob);
+      a.download = `复盘-${dateText}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  };
+  img.src = url;
 }
 
 
